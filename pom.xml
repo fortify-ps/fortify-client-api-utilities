@@ -27,7 +27,7 @@
 	<packaging>pom</packaging>
 	<groupId>com.fortify.client.api.utilities</groupId>
 	<artifactId>client-api-utilities-root</artifactId>
-	<version>5.0</version>
+	<version>5.1-SNAPSHOT</version>
 	
 	<description>This module is the parent module for utilities related to the Fortify client API modules.</description>
 	<organization>
@@ -50,7 +50,7 @@
 	</developers>
 	<scm>
 		<developerConnection>scm:git:https://github.com/fortify-ps/fortify-client-api-utilities.git</developerConnection>
-		<tag>5.0</tag>
+		<tag>master</tag>
 	</scm>
 	<inceptionYear>2017</inceptionYear>
 	<properties>
