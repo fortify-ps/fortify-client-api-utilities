@@ -25,7 +25,6 @@
 package com.fortify.client.utilities.analyze;
 
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -82,31 +81,19 @@ public class CallsToAnnotatedMethodsAnalyzer {
 
 	protected static void visitClasses(String[] jars, ClassVisitor classVisitor) {
 		for (String jar : jars) {
-			JarFile jarFile = null;
-			try {
-				try {
-					jarFile = new JarFile(jar);
-			        Enumeration<JarEntry> entries = jarFile.entries();
-		
-			        while (entries.hasMoreElements()) {
-			            JarEntry entry = entries.nextElement();
-		
-			            if (entry.getName().endsWith(".class")) {
-			            	try {
-				                InputStream stream = null;
-				                try {
-				                	stream = new BufferedInputStream(jarFile.getInputStream(entry), 1024);
-				                	new ClassReader(stream).accept(classVisitor, 0);
-								} finally {
-				                	stream.close();
-				                }
-			            	} catch ( IOException e ) { e.printStackTrace(); }
-			            }
-			        }
-				} finally {
-					jarFile.close();
+			try (JarFile jarFile = new JarFile(jar)){
+		        Enumeration<JarEntry> entries = jarFile.entries();
+	
+		        while (entries.hasMoreElements()) {
+		            JarEntry entry = entries.nextElement();
+	
+		            if (entry.getName().endsWith(".class")) {
+		            	try (InputStream stream = new BufferedInputStream(jarFile.getInputStream(entry), 1024) ) {
+			                new ClassReader(stream).accept(classVisitor, 0);
+						} catch ( Exception e ) { e.printStackTrace(); }
+		            }
 				}
-			} catch ( IOException e ) { e.printStackTrace(); }
+			} catch ( Exception e ) { e.printStackTrace(); }
 		}
 	}
 	
@@ -121,7 +108,7 @@ public class CallsToAnnotatedMethodsAnalyzer {
 		private String className;
 		
 		public AbstractClassVisitor() {
-			super(Opcodes.ASM5);
+			super(Opcodes.ASM7);
 		}
 		
 		@Override

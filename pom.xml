@@ -59,8 +59,15 @@
 	</properties>
 	<repositories>
 		<repository>
-			<id>FortifyMavenRepo</id>
-			<url>https://raw.githubusercontent.com/fortify-ps/FortifyMavenRepo/master</url>
+			<id>FortifyPSMavenRepo</id>
+			<url>https://dl.bintray.com/fortify-ps/maven</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>FortifyPSMavenRepo-SNAPSHOT</id>
+			<url>http://oss.jfrog.org/oss-snapshot-local</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
@@ -75,10 +82,10 @@
 	
 	<dependencyManagement>
 		<dependencies>
-			<dependency> 
-				<groupId>com.fortify.client.api</groupId> 
-				<artifactId>client-api-root</artifactId> 
-				<version>5.0</version> 
+			<dependency>
+				<groupId>com.fortify.client.api</groupId>
+				<artifactId>fortify-client-api</artifactId>
+				<version>5.4-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -91,7 +98,7 @@
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm</artifactId>
-				<version>5.0.3</version>
+				<version>7.3.1</version>
 				<scope>compile</scope>
 			</dependency>
 		</dependencies>
