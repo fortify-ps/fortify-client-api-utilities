@@ -25,7 +25,10 @@
 package com.fortify.client.utilities.analyze;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,7 +58,7 @@ public class CallsToAnnotatedMethodsAnalyzer {
 	protected boolean findAnnotatedMethods(String[] jars, String annotation, Map<String, Set<String>> methodsToAnnotationValuesMap) {
 		System.out.println("Scanning for methods annotated with annotation "+annotation);
 		FindAnnotatedMethods classVisitor = new FindAnnotatedMethods(annotation, methodsToAnnotationValuesMap);
-		visitClasses(jars, classVisitor);
+		visitClasses(classVisitor, jars);
 		System.out.println("Methods and annotation values found until now:");
 		System.out.println(methodsToAnnotationValuesMap);
 		return classVisitor.hasFoundNew();
@@ -64,7 +67,7 @@ public class CallsToAnnotatedMethodsAnalyzer {
 	protected boolean findCopyToConstructorAnnotatedMethods(String[] jars, String copyToConstructorsAnnotation, Map<String, Set<String>> methodsToAnnotationValuesMap) {
 		System.out.println("Scanning for methods annotated with annotation "+copyToConstructorsAnnotation);
 		FindCopyToConstructorAnnotatedMethods classVisitor = new FindCopyToConstructorAnnotatedMethods(copyToConstructorsAnnotation, methodsToAnnotationValuesMap);
-		visitClasses(jars, classVisitor);
+		visitClasses(classVisitor, jars);
 		System.out.println("Methods and annotation values found until now:");
 		System.out.println(methodsToAnnotationValuesMap);
 		return classVisitor.hasFoundNew();
@@ -73,26 +76,34 @@ public class CallsToAnnotatedMethodsAnalyzer {
 	protected boolean findIndirectMethodInvocations(String[] jars, Map<String, Set<String>> methodsToAnnotationValuesMap) {
 		System.out.println("Next round of scanning for methods that call methods found in previous round");
 		FindInvocationsToMethodsInAnnotationValuesMap classVisitor = new FindInvocationsToMethodsInAnnotationValuesMap(methodsToAnnotationValuesMap);
-		visitClasses(jars, classVisitor);
+		visitClasses(classVisitor, jars);
 		System.out.println("Methods and annotation values found until now:");
 		System.out.println(methodsToAnnotationValuesMap);
 		return classVisitor.hasFoundNew();
 	}
 
-	protected static void visitClasses(String[] jars, ClassVisitor classVisitor) {
-		for (String jar : jars) {
+	protected static void visitClasses(ClassVisitor classVisitor, String... jarFiles) {
+		for (String jar : jarFiles) {
 			try (JarFile jarFile = new JarFile(jar)){
 		        Enumeration<JarEntry> entries = jarFile.entries();
-	
 		        while (entries.hasMoreElements()) {
-		            JarEntry entry = entries.nextElement();
-	
-		            if (entry.getName().endsWith(".class")) {
-		            	try (InputStream stream = new BufferedInputStream(jarFile.getInputStream(entry), 1024) ) {
-			                new ClassReader(stream).accept(classVisitor, 0);
-						} catch ( Exception e ) { e.printStackTrace(); }
-		            }
+		            visitClasses(classVisitor, jarFile, entries.nextElement());
 				}
+			} catch ( Exception e ) { e.printStackTrace(); }
+		}
+	}
+
+	private static void visitClasses(ClassVisitor classVisitor, JarFile jarFile, JarEntry entry) {
+		if (entry.getName().endsWith(".class")) {
+			try (InputStream stream = new BufferedInputStream(jarFile.getInputStream(entry), 1024) ) {
+		        new ClassReader(stream).accept(classVisitor, 0);
+			} catch ( Exception e ) { e.printStackTrace(); }
+		} else if (entry.getName().endsWith(".jar")) {
+			try {
+				File tempFile = File.createTempFile("tempFile", "zip");
+				tempFile.deleteOnExit();
+		        Files.copy(jarFile.getInputStream(entry), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				visitClasses(classVisitor, tempFile.getAbsolutePath());
 			} catch ( Exception e ) { e.printStackTrace(); }
 		}
 	}
